@@ -1,0 +1,133 @@
+/*Insight 1: 1. Which Category of Family Movies was most rented? Which was lest rented? */
+
+WITH film_rental_total
+AS (SELECT
+  film_id,
+  COUNT(rental.rental_id) AS total_rental
+FROM inventory
+JOIN rental
+  ON inventory.inventory_id = rental.inventory_id
+GROUP BY film_id)
+
+SELECT
+  film.title AS film_title,
+  category.name AS category,
+  film_rental_total.total_rental AS total_rental
+FROM film
+JOIN film_rental_total
+  ON film.film_id = film_rental_total.film_id
+JOIN film_category
+  ON film.film_id = film_category.film_id
+JOIN category
+  ON film_category.category_id = category.category_id
+WHERE category.name IN ('Animation', 'Children', 'Classics', 'Comedy', 'Family', 'Music')
+ORDER BY category, film_title;
+
+
+
+/*Insight 2 Did the two stores have similar trend in terms of monthly rentals? */
+WITH store_rental
+AS (SELECT
+  rental.rental_id AS rental_id,
+  DATE_TRUNC('month', rental.rental_date) AS rental_date,
+  staff.store_id AS store_id
+FROM rental
+JOIN staff
+  ON rental.staff_id = staff.staff_id)
+
+SELECT
+  DATE_PART('month', rental_date) AS Rental_month,
+  DATE_PART('year', rental_date) AS Rental_year,
+  store_id AS Store_id,
+  COUNT(rental_id) AS Count_rentals
+FROM store_rental
+GROUP BY Rental_year,
+         Rental_month,
+         Store_id
+ORDER BY Rental_year, REntal_month, Store_id;
+
+
+
+
+/*Insight 3 Who were the top 10 Customers with largest payment totals? And what were their rental counts? */
+WITH payment2007 AS (
+    SELECT customer_id, 
+  	SUM(amount) as pay_amount,
+		COUNT(payment_id) as pay_countpermon,
+		DATE_TRUNC('month', payment_date) AS pay_mon
+		FROM payment
+	WHERE DATE_PART('year',payment_date) = 2007
+	GROUP BY customer_id, pay_mon)  
+/*Join with top10 customers */ 
+SELECT
+		payment2007.pay_mon AS pay_mon,
+		CONCAT(customer.first_name,' ',customer.last_name) AS fullname,
+		payment2007.pay_countpermon AS pay_countpermon,
+		payment2007.pay_amount AS pay_amount
+	FROM customer 
+	JOIN payment2007
+	ON customer.customer_id = payment2007.customer_id
+	JOIN (
+		SELECT customer_id, SUM(pay_amount) AS year_total
+			FROM payment2007
+			GROUP BY customer_id
+			ORDER BY year_total DESC 
+			LIMIT 10
+	) topcustomer
+	ON customer.customer_id = topcustomer.customer_id
+	ORDER BY fullname,pay_mon;
+
+
+
+/*Insight 4. Which customer is paying the most difference in Top 10 paying customers? */
+
+/*Aggregate payment to monthly totals by customer in 2007 */
+WITH payment2007 AS (
+    SELECT customer_id, 
+  	SUM(amount) as pay_amount,
+		COUNT(payment_id) as pay_countpermon,
+		DATE_TRUNC('month', payment_date) AS pay_mon
+		FROM payment
+	WHERE DATE_PART('year',payment_date) = 2007
+	GROUP BY customer_id, pay_mon),  
+/*Join with top10 customers */ 
+topcustomer AS (
+	SELECT
+		payment2007.pay_mon AS pay_mon,
+		CONCAT(customer.first_name,' ',customer.last_name) AS fullname,
+		payment2007.pay_countpermon AS pay_countpermon,
+		payment2007.pay_amount AS pay_amount,
+		LEAD(payment2007.pay_amount) OVER
+			(PARTITION BY payment2007.customer_id ORDER BY payment2007.pay_mon)
+			AS lead,
+		(LEAD(payment2007.pay_amount) OVER
+			(PARTITION BY payment2007.customer_id ORDER BY payment2007.pay_mon)) - payment2007.pay_amount AS dif_lead
+	FROM customer 
+	JOIN payment2007
+	ON customer.customer_id = payment2007.customer_id
+	JOIN 
+	(
+		SELECT customer_id, SUM(pay_amount) AS year_total
+			FROM payment2007
+			GROUP BY customer_id
+			ORDER BY year_total DESC 
+			LIMIT 10
+	) top10
+	ON customer.customer_id = top10.customer_id
+	ORDER BY fullname,pay_mon
+)
+	
+SELECT *, 
+	CASE
+		WHEN topcustomer.dif_lead = (
+			SELECT MAX(topcustomer.dif_lead)
+				FROM topcustomer
+				LIMIT 1
+		) THEN 'maxdif'
+		ELSE NULL 
+		END AS maxdif_flag
+FROM topcustomer
+ORDER BY fullname,pay_mon;	
+
+
+
