@@ -1,88 +1,11 @@
-# About 
-
-This file documents all the SQL scripts for Project 1: Investigate a Relational Database 
-
-# Quiz 
-
-## Quiz 1 
-
-1.   Provides the following details: actor's first and last name combined as full_name, film title, film description and length of the movie.
-
-    ```sql
-    SELECT CONCAT(first_name,' ',last_name),
-    	film.title,
-    	film.description, 
-        film.length
-    	FROM actor
-        JOIN film_actor
-        ON actor.actor_id = film_actor.actor_id
-        JOIN film
-        ON film_actor.film_id = film.film_id;
-    ```
-
-2.  Write a query that creates a list of actors and movies where the movie length was more than 60 minutes. How many rows are there in this query result?
-
-```sql
-SELECT CONCAT(first_name,' ',last_name),
-	film.title,
-	film.description, 
-    film.length
-	FROM actor
-    JOIN film_actor
-    ON actor.actor_id = film_actor.actor_id
-    JOIN film
-    ON film_actor.film_id = film.film_id
-    WHERE film.length > 60;
-```
-
-3.  Write a query that captures the actor id, full name of the actor, and counts the number of movies each actor has made. *(HINT: Think about whether you should group by actor id or the full name of the actor.*) Identify the actor who has made the maximum number movies.
-
-```sql
-SELECT actor.actor_id,
-	CONCAT(first_name,' ',last_name),
-	COUNT(film.film_id) AS film_count
-	FROM actor
-    JOIN film_actor
-    ON actor.actor_id = film_actor.actor_id
-    JOIN film
-    ON film_actor.film_id = film.film_id
-    GROUP BY actor.actor_id
-    ORDER BY film_count DESC;
-```
-
-## Quiz 2
-
-1.  Write a query that displays a table with 4 columns: actor's full name, film title, length of movie, and a column name "filmlen_groups" that classifies movies based on their length. Filmlen_groups should include 4 categories: 1 hour or less, Between 1-2 hours, Between 2-3 hours, More than 3 hours.
-
-    ```sql
-    SELECT 
-    	CONCAT(first_name,' ',last_name) AS actor_full_name,
-    	film.title,
-        film.length,
-        (CASE film.length
-         	WHEN film.length <=60 THEN '1 hour or less'
-         	WHEN film.length <=120 THEN 'Between 1-2 hours'
-         	WHEN film.length <=180 THEN 'Between 2-3 hours' 
-          	WHEN film.length > 180 THEN 'More than 3 hours'
-         	ELSE 'film length N/A' END) AS filmlen_group
-        
-        FROM actor
-        JOIN film_actor
-        ON actor.actor_id = film_actor.actor_id
-        JOIN film
-        ON film_actor.film_id = film.film_id
-        GROUP BY 1;
-    ```
-
+# Project 1: Investigate a Relational Database: Movie Rental SQL Project
     
 
 # Insight 1. Family Movie Rentals by Category
 
-Question 1 from Question Set 1 
-
 We want to understand more about the movies that families are watching. The following categories are considered family movies: Animation, Children, Classics, Comedy, Family and Music.
 
-**Create a query that lists each movie, the film category it is classified in, and the number of times it has been rented out.**
+**The query below lists each movie, the film category it is classified in, and the number of times it has been rented out.**
 
 ```sql
 WITH film_rental_total
@@ -114,7 +37,7 @@ ORDER BY category, film_title;
 
 # Insight 2:  Comparing Rental Trend of Two Stores
 
-We want to find out how the two stores compare in their count of rental orders during every month for all the years we have data for. **Write a query that returns the store ID for the store, the year and month and the number of rental orders each store has fulfilled for that month. Your table should include a column for each of the following: year, month, store ID and count of rental orders fulfilled during that month.**
+We want to find out how the two stores compare in their count of rental orders during every month for all the years we have data for. **The query below returns the store ID for the store, the year and month and the number of rental orders each store has fulfilled for that month. Your table should include a column for each of the following: year, month, store ID and count of rental orders fulfilled during that month.**
 
 ```sql
 /*Create a table with store, staff and rental information */
@@ -141,7 +64,7 @@ ORDER BY Rental_year, REntal_month, Store_id;
 
 # Insight 3:  Monthly Payments of Top 10 Paying Customers
 
-We would like to know who were our top 10 paying customers, how many payments they made on a monthly basis during 2007, and what was the amount of the monthly payments. **Can you write a query to capture the customer name, month and year of payment, and total payment amount for each month by these top 10 paying customers?**
+We would like to know who were our top 10 paying customers, how many payments they made on a monthly basis during 2007, and what was the amount of the monthly payments. **The query below is used to capture the customer name, month and year of payment, and total payment amount for each month by these top 10 paying customers**
 
 ```sql
 /*Aggregate payment to monthly totals by customer in 2007 */
@@ -177,7 +100,7 @@ SELECT
 
 # Insight 4: Change of Monthly Payments of Top 10 Customers
 
-Finally, for each of these top 10 paying customers, I would like to find out the difference across their monthly payments during 2007. Please go ahead and **write a query to compare the payment amounts in each successive month.** Repeat this for each of these 10 paying customers. Also, it will be tremendously helpful if you can identify the customer name who paid the most difference in terms of payments.
+Finally, for each of these top 10 paying customers, we would like to find out the difference across their monthly payments during 2007. The query below compares the payment amounts in each successive month.In addition, we also identify the customer name who paid the most difference in terms of payments.
 
 ```sql
 /*Aggregate payment to monthly totals by customer in 2007 */
