@@ -1,4 +1,4 @@
-/*Insight 1: 1. Which Category of Family Movies was most rented? Which was lest rented? */
+/*Insight 1: 1. Which Category of Family Movies was most rented? Which was least rented? */
 
 WITH film_rental_total
 AS (SELECT
